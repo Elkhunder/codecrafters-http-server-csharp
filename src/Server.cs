@@ -1,6 +1,13 @@
 using System.Net;
+using System.Net.Mime;
 using System.Net.Sockets;
 using System.Text;
+
+var routes = new Dictionary<string, string>()
+{
+    {"index", "/"},
+    {"echo", "/echo"}
+};
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 Console.WriteLine("Logs from your program will appear here!");
@@ -8,8 +15,8 @@ TcpListener? server = null;
 try
 {
     //Uncomment this block to pass the first stage
-    var routes = new List<string> { "/" };
-
+    
+    
     var ipEndpoint = new IPEndPoint(IPAddress.Loopback, 4221);
     server = new TcpListener(ipEndpoint);
     
@@ -21,6 +28,7 @@ try
     {
         Console.WriteLine("Waiting for connection...");
         using var socket = server.AcceptSocket();
+        
         Console.WriteLine("Connected!");
 
         // Get stream object for reading and writing
@@ -36,11 +44,25 @@ try
             var request = HandleRequest(httpRequest);
 
             var hostEndpoint = new IPEndPoint(request.Headers.Address, request.Headers.Port);
-            if (hostEndpoint.Equals(ipEndpoint) && routes.Contains(request.Resource))
+            if (hostEndpoint.Equals(ipEndpoint) && routes.ContainsValue(request.Resource))
             {
-                
-                var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n\r\n");    
-                stream.Write(returnBuffer, 0, returnBuffer.Length);
+                if (request.Resource == routes["index"])
+                {
+                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n\r\n");    
+                    stream.Write(returnBuffer, 0, returnBuffer.Length);
+                }
+
+                if (request.Resource == routes["echo"])
+                {
+                    string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
+                                      "Content-Type: text/plain\r\n" + // Content-Type header
+                                      $"Content-Length: {request.Body.Length}\r\n" + // Content-Length header
+                                      "\r\n" + // Empty line indicates the end of headers
+                                      request.Body; // Response body content
+                    
+                    var returnBuffer = Encoding.ASCII.GetBytes(response);
+                    stream.Write(returnBuffer, 0, returnBuffer.Length);
+                }
             }
             else
             {
@@ -116,18 +138,33 @@ Request HandleRequest(string httpRequest)
             request.Method = requestParts[0];
             request.Resource = requestParts[1];
             request.ProtocolVersion = requestParts[2];
-                
-            Console.WriteLine($"Method: {request.Method}, Resources: {request.Resource}, Protocol Version: {request.ProtocolVersion}");
+
+            if (request.Resource.StartsWith(routes["echo"]))
+            {
+                var resourceSplit = request.Resource.Split(new[]
+                    { routes["echo"]}, 2, StringSplitOptions.RemoveEmptyEntries);
+
+                if (resourceSplit.Length > 0)
+                {
+                    request.Body = resourceSplit[0][1..];
+                    request.Resource = routes["echo"];
+                }
+            }
+            
+            Console.WriteLine($"Method: {request.Method}, Resources: {request.Resource}, Protocol Version: {request.ProtocolVersion}, Request Body: {request.Body}");
         }
     }
     
     return request;
 }
 
+
+
 public record Request
 {
     public string Method { get; set; } = string.Empty;
     public string Resource { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
     public string ProtocolVersion { get; set; } = string.Empty;
     public RequestHeader Headers { get; set; } = new RequestHeader();
 }
