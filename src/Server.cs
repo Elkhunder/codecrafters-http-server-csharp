@@ -136,7 +136,7 @@ Request HandleRequest(string httpRequest)
                     }
                     break;
                 case "User-Agent":
-                    requestHeader.UserAgent = headerParts[1];
+                    requestHeader.UserAgent = headerParts[1].Trim();
                     Console.WriteLine($"Added User Agent to Request Header: {requestHeader.UserAgent}");
                     break;
                 case "Accept":
