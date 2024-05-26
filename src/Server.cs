@@ -6,7 +6,8 @@ using System.Text;
 var routes = new Dictionary<string, string>()
 {
     {"index", "/"},
-    {"echo", "/echo"}
+    {"echo", "/echo"},
+    {"user-agent", "/user-agent"},
 };
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -46,9 +47,21 @@ try
             var hostEndpoint = new IPEndPoint(request.Headers.Address, request.Headers.Port);
             if (hostEndpoint.Equals(ipEndpoint) && routes.ContainsValue(request.Resource))
             {
+                
                 if (request.Resource == routes["index"])
                 {
                     var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n\r\n");    
+                    stream.Write(returnBuffer, 0, returnBuffer.Length);
+                }
+
+                if (request.Resource == routes["user-agent"])
+                {
+                    string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
+                                      "Content-Type: text/plain\r\n" + // Content-Type header
+                                      $"Content-Length: {request.Headers.UserAgent.Length}\r\n" + // Content-Length header
+                                      "\r\n" + // Empty line indicates the end of headers
+                                      request.Headers.UserAgent; // Response body content
+                    var returnBuffer = Encoding.ASCII.GetBytes(response);
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
 
@@ -124,8 +137,11 @@ Request HandleRequest(string httpRequest)
                     break;
                 case "User-Agent":
                     requestHeader.UserAgent = headerParts[1];
-                    Console.WriteLine($"Added User Agent to Request Header");
-                    Console.WriteLine($"User Agent: {requestHeader.UserAgent}");
+                    Console.WriteLine($"Added User Agent to Request Header: {requestHeader.UserAgent}");
+                    break;
+                case "Accept":
+                    requestHeader.Accept = headerParts[1];
+                    Console.WriteLine($"Added Accept to Request Header: {requestHeader.Accept}");
                     break;
             }
             
@@ -172,6 +188,7 @@ public record Request
 public record RequestHeader
 {
     public string UserAgent { get; set; } = string.Empty;
+    public string Accept { get; set; } = string.Empty;
     public int Port { get; set; } = 0;
     public IPAddress Address { get; set; } = IPAddress.Any;
 }
