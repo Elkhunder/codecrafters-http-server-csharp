@@ -70,36 +70,40 @@ void HandleClientConnection(Socket socket)
                 
                 if (request.Resource == routes["index"])
                 {
-                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n");    
+                    var response = new HttpResponse("HTTP/1.1 200 OK");
+                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());    
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
 
                 if (request.Resource == routes["user-agent"])
                 {
-                    var response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
-                                   "Content-Type: text/plain\r\n" + // Content-Type header
-                                   $"Content-Length: {request.Headers.UserAgent.Length}\r\n" + // Content-Length header
-                                   "\r\n" + // Empty line indicates the end of headers
-                                   request.Headers.UserAgent; // Response body content
-                    var returnBuffer = Encoding.ASCII.GetBytes(response);
+                    // string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
+                    //                   "Content-Type: text/plain\r\n" + // Content-Type header
+                    //                   $"Content-Length: {request.Headers.UserAgent.Length}\r\n" + // Content-Length header
+                    //                   "\r\n" + // Empty line indicates the end of headers
+                    //                   request.Headers.UserAgent; // Response body content
+                    HttpResponse response = new HttpResponse("HTTP/1.1 200 OK", request.Headers.UserAgent);
+                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
 
                 if (request.Resource == routes["echo"])
                 {
-                    var response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
-                                   "Content-Type: text/plain\r\n" + // Content-Type header
-                                   $"Content-Length: {request.Body.Length}\r\n" + // Content-Length header
-                                   "\r\n" + // Empty line indicates the end of headers
-                                   request.Body; // Response body content
+                    // string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
+                    //                   "Content-Type: text/plain\r\n" + // Content-Type header
+                    //                   $"Content-Length: {request.Body.Length}\r\n" + // Content-Length header
+                    //                   "\r\n" + // Empty line indicates the end of headers
+                    //                   request.Body; // Response body content
+                    var response = new HttpResponse("HTTP/1.1 200 OK", request.Body);
                     
-                    var returnBuffer = Encoding.ASCII.GetBytes(response);
+                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
             }
             else
             {
-                var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 404 Not Found");
+                var response = new HttpResponse("HTTP/1.1 404 Not Found");
+                var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
                 stream.Write(returnBuffer, 0, returnBuffer.Length);
             }
         }
@@ -194,7 +198,7 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
     {
         if (Body == null)
         {
-            return $"{Status}\r\n";
+            return $"{Status}\r\n\r\n";
         }
         // var sb = new StringBuilder();
         // sb.Append($"{Status}").Append("\r\n");
