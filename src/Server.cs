@@ -198,7 +198,7 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
     {
         if (Body == null)
         {
-            return $"Status\r\n";
+            return $"{Status}\r\n";
         }
         // var sb = new StringBuilder();
         // sb.Append($"{Status}").Append("\r\n");
