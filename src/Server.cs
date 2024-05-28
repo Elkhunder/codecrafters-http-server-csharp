@@ -196,14 +196,22 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
 
     public override string ToString()
     {
-        var sb = new StringBuilder();
-        sb.Append($"{Status}").Append("\r\n");
-        if (Body == null) return sb.ToString();
-        sb.AppendLine($"Content-Type: {ContentType}\r");
-        sb.AppendLine($"Content-Length: {ContentLength}\r");
-        sb.AppendLine();
-        sb.Append(Body);
-        return sb.ToString();
+        if (Body == null)
+        {
+            return $"Status\r\n";
+        }
+        // var sb = new StringBuilder();
+        // sb.Append($"{Status}").Append("\r\n");
+        // if (Body == null) return sb.ToString();
+        // sb.AppendLine($"Content-Type: {ContentType}\r");
+        // sb.AppendLine($"Content-Length: {ContentLength}\r");
+        // sb.AppendLine();
+        // sb.Append(Body);
+        return $"{Status}\r\n" + // Status line (includes protocol version and status code)"
+               $"Content-Type: {ContentType}\r\n" + // Content-Type header
+               $"Content-Length: {ContentLength}\r\n" + // Content-Length header
+               "\r\n" + // Empty line indicates the end of headers
+               Body; // Response body content
     }
 }
 public record Request
