@@ -70,7 +70,7 @@ void HandleClientConnection(Socket socket)
                 
                 if (request.Resource == routes["index"])
                 {
-                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK");    
+                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n");    
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
 
