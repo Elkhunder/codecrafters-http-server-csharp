@@ -198,7 +198,6 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
     {
         var sb = new StringBuilder();
         sb.AppendLine($"{Status}\r");
-        sb.
         if (Body == null) return sb.ToString();
         sb.AppendLine($"Content-Type: {ContentType}\r");
         sb.AppendLine($"Content-Length: {ContentLength}\r");
