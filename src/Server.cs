@@ -70,7 +70,7 @@ void HandleClientConnection(Socket socket)
                 
                 if (request.Resource == routes["index"])
                 {
-                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n");    
+                    var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK");    
                     stream.Write(returnBuffer, 0, returnBuffer.Length);
                 }
 
@@ -99,7 +99,7 @@ void HandleClientConnection(Socket socket)
             }
             else
             {
-                var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 404 Not Found\r\n");
+                var returnBuffer = Encoding.ASCII.GetBytes("HTTP/1.1 404 Not Found");
                 stream.Write(returnBuffer, 0, returnBuffer.Length);
             }
         }
