@@ -197,10 +197,11 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
     public override string ToString()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Status\r\n");
+        sb.AppendLine($"{Status}\r");
+        sb.
         if (Body == null) return sb.ToString();
-        sb.AppendLine($"Content-Type: {ContentType}\r\n");
-        sb.AppendLine($"Content-Length: {ContentLength}\r\n");
+        sb.AppendLine($"Content-Type: {ContentType}\r");
+        sb.AppendLine($"Content-Length: {ContentLength}\r");
         sb.AppendLine();
         sb.Append(Body);
         return sb.ToString();
