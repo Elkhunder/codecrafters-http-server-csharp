@@ -227,7 +227,7 @@ public abstract class HttpResponseBuilder()
             {
                 string fileContent = File.ReadAllText(filePath);
                 httpRequest.StatusCode = (int)HttpStatusCode.OK;
-                httpRequest.Body(fileContent);
+                httpRequest.Body = fileContent;
             }
             else
             {
