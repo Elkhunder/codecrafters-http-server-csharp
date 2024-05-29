@@ -195,6 +195,7 @@ public abstract class HttpResponseBuilder()
                 httpRequest.StatusCode = (int)HttpStatusCode.OK;
                 httpRequest.Body = fileContent;
                 Console.WriteLine($"Http Body: {httpRequest.Body} - Should match file contents");
+                Console.WriteLine($"Http Body Length: {httpRequest.Body.Length}");
             }
             else
             {
