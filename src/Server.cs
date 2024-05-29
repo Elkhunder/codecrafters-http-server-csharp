@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 
 var port = 4221;
@@ -34,7 +35,7 @@ try
         Console.WriteLine("Waiting for connection...");
 
         var clientSocket = await server.AcceptSocketAsync();
-        await Task.Run(async () => await HandleClientAsync(clientSocket));
+        _ = Task.Run(async () => await HandleClientAsync(clientSocket));
     }
 }
 catch (Exception e)
@@ -69,7 +70,7 @@ async Task HandleClientAsync(Socket socket)
 
             var httpRequest = HttpRequestParser.Parse(rawHttpRequest, routes);
             var response = HttpResponseBuilder.Build(httpRequest, directoryPath);
-            await HttpResponseHandler.Respond(socket, response);
+            HttpResponseHandler.Respond(socket, response);
         }
     }
     catch (SocketException socketException)
@@ -171,10 +172,10 @@ public abstract class HttpRequestParser()
 
 public abstract class HttpResponseHandler()
 {
-    public static async Task Respond(Socket socket, HttpResponse response)
+    public static void Respond(Socket socket, HttpResponse response)
     {
         var buffer = Encoding.ASCII.GetBytes(response.ToString());
-        await socket.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), SocketFlags.None);
+        socket.Send(new ArraySegment<byte>(buffer, 0, buffer.Length), SocketFlags.None);
     }
 }
 
@@ -235,19 +236,38 @@ public record HttpResponse(string? Status = null, string? ContentType = null, in
 
     public override string ToString()
     {
+        
         var sb = new StringBuilder();
-        if (Body == null)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            sb.AppendLine($"{Status}\r");
-            sb.AppendLine("\r");
+            if (Body == null)
+            {
+                sb.AppendLine($"{Status}");
+                sb.AppendLine("");
+                return sb.ToString();
+            }
+            sb.AppendLine($"{Status}");
+            sb.AppendLine($"Content-Type: {ContentType}");
+            sb.AppendLine($"Content-Length: {ContentLength}");
+            sb.AppendLine("");
+            sb.Append(Body);
             return sb.ToString();
         }
-        sb.AppendLine($"{Status}\r");
-        sb.AppendLine($"Content-Type: {ContentType}\r");
-        sb.AppendLine($"Content-Length: {ContentLength}\r");
-        sb.AppendLine("\r");
-        sb.Append(Body);
-        return sb.ToString();
+        else
+        {
+            if (Body == null)
+            {
+                sb.AppendLine($"{Status}\r");
+                sb.AppendLine("\r");
+                return sb.ToString();
+            }
+            sb.AppendLine($"{Status}\r");
+            sb.AppendLine($"Content-Type: {ContentType}\r");
+            sb.AppendLine($"Content-Length: {ContentLength}\r");
+            sb.AppendLine("\r");
+            sb.Append(Body);
+            return sb.ToString();
+        }
     }
 }
 
