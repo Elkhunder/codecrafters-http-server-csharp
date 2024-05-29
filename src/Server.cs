@@ -16,7 +16,7 @@ var routes = new Dictionary<string, Routes>()
 var arguments = Environment.GetCommandLineArgs();
 var directoryPath = string.Empty;
 Console.WriteLine($"Arguments Length: {arguments.Length}, Arguments: {arguments[0]}");
-if (arguments.Length > 0)
+if (arguments.Length == 2)
 {
     directoryPath = arguments[2];
 }
