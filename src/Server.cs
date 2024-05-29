@@ -141,10 +141,10 @@ public abstract class HttpRequestParser()
                 var httpResource = requestParts[1];
                 httpRequest.ProtocolVersion = requestParts[2];
 
-                if (!"/".StartsWith(httpResource))
-                {
-                    httpResource = $"/{httpResource}";
-                }
+                // if (!"/".StartsWith(httpResource))
+                // {
+                //     httpResource = $"/{httpResource}";
+                // }
                 
                 switch (httpRequest.Route)
                 {
