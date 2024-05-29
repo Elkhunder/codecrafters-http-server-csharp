@@ -69,7 +69,7 @@ async Task HandleClientAsync(Socket socket)
             Console.WriteLine($"Received: {rawHttpRequest}");
 
             var httpRequest = HttpRequestParser.Parse(rawHttpRequest, routes);
-            var response = HttpResponseBuilder.Build(httpRequest);
+            var response = HttpResponseBuilder.Build(httpRequest, directoryPath);
             await HttpResponseHandler.Respond(socket, response);
         }
     }
