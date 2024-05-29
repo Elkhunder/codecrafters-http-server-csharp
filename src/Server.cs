@@ -34,7 +34,7 @@ try
         Console.WriteLine("Waiting for connection...");
 
         var clientSocket = await server.AcceptSocketAsync();
-        _ = HandleClientAsync(clientSocket);
+        await Task.Run(async () => await HandleClientAsync(clientSocket));
     }
 }
 catch (Exception e)
