@@ -199,6 +199,7 @@ public abstract class HttpResponseBuilder()
             }
             else
             {
+                Console.WriteLine("File Does Not Exist");
                 httpRequest.StatusCode = (int)HttpStatusCode.NotFound;
             }
         }
@@ -207,7 +208,7 @@ public abstract class HttpResponseBuilder()
             Routes.Default => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}"),
             Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}","text/plain" ,httpRequest.Body),
             Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "text/plain" ,httpRequest.Headers.UserAgent),
-            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "application/octet-stream" , httpRequest.Body),
+            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode} {httpRequest.StatusMessage}", "application/octet-stream" , httpRequest.Body),
             _ => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
         };
     }
