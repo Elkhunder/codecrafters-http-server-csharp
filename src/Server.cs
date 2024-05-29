@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 
 var port = 4221;
@@ -138,68 +139,17 @@ public abstract class HttpRequestParser()
                 var requestParts = line.Split(' ');
                 if (requestParts.Length < 3) continue;
                 httpRequest.Method = requestParts[0];
-                var httpResource = requestParts[1];
+                SplitPath(requestParts[1], out var httpResource, out var content);
                 httpRequest.ProtocolVersion = requestParts[2];
-
-                // if (!"/".StartsWith(httpResource))
-                // {
-                //     httpResource = $"/{httpResource}";
-                // }
-                
-                switch (httpRequest.Route)
+                if (routes.TryGetValue(httpResource, out var route))
                 {
-                    case Routes.Echo:
-                    {
-                        var echoRoute = routes.FirstOrDefault(pair => pair.Value is Routes.Echo).Key;
-                        httpRequest.Body = httpResource[echoRoute.Length..].Trim('/');
-                        httpResource = httpResource[..echoRoute.Length];
-                    
-                        if (routes.TryGetValue(httpResource, out var route))
-                        {
-                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
-                            httpRequest.Route = route;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
-                        }
-
-                        break;
-                    }
-                    case Routes.Files:
-                    {
-                        var fileRoute = routes.FirstOrDefault(pair => pair.Value is Routes.Files).Key;
-                        Console.WriteLine($"FileRoute: {fileRoute}");
-                        httpRequest.Body = httpResource[fileRoute.Length..].Trim('/');
-                        Console.WriteLine($"Request Body: {httpRequest.Body}");
-                        httpResource = httpResource[..fileRoute.Length];
-                        Console.WriteLine($"Http Resource: {httpResource}");
-                        if (routes.TryGetValue(httpResource, out var route))
-                        {
-                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
-                            httpRequest.Route = route;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
-                        }
-
-                        break;
-                    }
-                    default:
-                    {
-                        if (routes.TryGetValue(httpResource, out var route))
-                        {
-                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
-                            httpRequest.Route = route;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
-                        }
-
-                        break;
-                    }
+                    Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
+                    httpRequest.Route = route;
+                    httpRequest.Body = content;
+                }
+                else
+                {
+                    Console.WriteLine($"Path: '{httpResource}' does not match any available route");
                 }
 
                 Console.WriteLine(
@@ -207,6 +157,17 @@ public abstract class HttpRequestParser()
             }
         }
         return httpRequest;
+    }
+
+    private static void SplitPath(string path, out string resource, out string content)
+    {
+        resource = String.Empty;
+        content = string.Empty;
+
+        path = path.TrimStart('/');
+        var segments = path.Split('/');
+        resource = $"/{segments[0]}";
+        content = segments[1];
     }
 }
 
