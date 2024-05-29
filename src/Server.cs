@@ -161,7 +161,7 @@ public abstract class HttpRequestParser()
 
     private static void SplitPath(string path, out string resource, out string content)
     {
-        resource = String.Empty;
+        resource = string.Empty;
         content = string.Empty;
 
         path = path.TrimStart('/');
@@ -203,7 +203,7 @@ public abstract class HttpResponseBuilder()
             Routes.Default => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}"),
             Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Body),
             Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Headers.UserAgent),
-            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Body),
+            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", ContentType: "application/octet-stream" , Body: httpRequest.Body),
             _ => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
         };
     }
