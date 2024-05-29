@@ -2,122 +2,94 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+var port = 4221;
+var ipEndPoint = new IPEndPoint(IPAddress.Loopback, port);
 
-var ipEndPoint = new IPEndPoint(IPAddress.Loopback, 4221);
+var routes = new Dictionary<string, Routes>()
+{
+    {"/", Routes.Default},
+    {"/echo", Routes.Echo},
+    {"/user-agent", Routes.UserAgent},
+    {"/files", Routes.Files},
+};
 
+string[] arguments = Environment.GetCommandLineArgs();
+string directoryPath = string.Empty;
+
+if (arguments.Length > 0)
+{
+    directoryPath = arguments[2];
+}
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 Console.WriteLine("Logs from your program will appear here!");
 TcpListener? server = null;
 try
 {
     server = new TcpListener(ipEndPoint);
-    
-    server.Start();
-    
-    Console.WriteLine("Waiting for connection...");
 
-    server.BeginAcceptSocket(AcceptConnectionCallback, server);
+    server.Start();
+    Console.WriteLine($"Server is listening on port: {port}");
+
+    while (true)
+    {
+        Console.WriteLine("Waiting for connection...");
+
+        var clientSocket = await server.AcceptSocketAsync();
+        _ = HandleClientAsync(clientSocket);
+    }
 }
-catch (SocketException e)
+catch (Exception e)
 {
-    Console.WriteLine("SocketException: {0}", e);
+    Console.WriteLine($"Exception: {e.Message}");
+}
+finally
+{
     server?.Stop();
 }
 
-Console.WriteLine("\nHitEnter to continue");
-Console.Read();
 return;
 
-void AcceptConnectionCallback(IAsyncResult asyncResult)
+
+async Task HandleClientAsync(Socket socket)
 {
-    if (asyncResult.AsyncState is null) return;
-    server = (TcpListener)asyncResult.AsyncState;
-
-    var socket = server.EndAcceptSocket(asyncResult);
-
-    Task.Run(() => HandleClientConnection(socket));
-    
-    server.BeginAcceptSocket(AcceptConnectionCallback, server);
-}
-
-void HandleClientConnection(Socket socket)
-{
-    var routes = new Dictionary<string, string>()
+    try
     {
-        {"index", "/"},
-        {"echo", "/echo"},
-        {"user-agent", "/user-agent"},
-    };
-    var bytes = new byte[256];
-    {
-        Console.WriteLine("Connected!");
+        var buffer = new byte[1_024];
 
-        // Get stream object for reading and writing
-        var stream = new NetworkStream(socket);
-
-        int i;
-
-        // loop to receive all data
-        while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+        while (true)
         {
-            var httpRequest = Encoding.ASCII.GetString(bytes, 0, i);
-            Console.WriteLine("Received: {0}", httpRequest);
-            var request = HandleRequest(httpRequest);
+            var bytesRead = await socket.ReceiveAsync(buffer, SocketFlags.None);
 
-            var hostEndpoint = new IPEndPoint(request.Headers.Address, request.Headers.Port);
-            if (hostEndpoint.Equals(ipEndPoint) && routes.ContainsValue(request.Resource))
+            if (bytesRead is 0)
             {
-                
-                if (request.Resource == routes["index"])
-                {
-                    var response = new HttpResponse("HTTP/1.1 200 OK");
-                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());    
-                    stream.Write(returnBuffer, 0, returnBuffer.Length);
-                }
-
-                if (request.Resource == routes["user-agent"])
-                {
-                    // string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
-                    //                   "Content-Type: text/plain\r\n" + // Content-Type header
-                    //                   $"Content-Length: {request.Headers.UserAgent.Length}\r\n" + // Content-Length header
-                    //                   "\r\n" + // Empty line indicates the end of headers
-                    //                   request.Headers.UserAgent; // Response body content
-                    HttpResponse response = new HttpResponse("HTTP/1.1 200 OK", request.Headers.UserAgent);
-                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
-                    stream.Write(returnBuffer, 0, returnBuffer.Length);
-                }
-
-                if (request.Resource == routes["echo"])
-                {
-                    // string response = "HTTP/1.1 200 OK\r\n" + // Status line (includes protocol version and status code)
-                    //                   "Content-Type: text/plain\r\n" + // Content-Type header
-                    //                   $"Content-Length: {request.Body.Length}\r\n" + // Content-Length header
-                    //                   "\r\n" + // Empty line indicates the end of headers
-                    //                   request.Body; // Response body content
-                    var response = new HttpResponse("HTTP/1.1 200 OK", request.Body);
-                    
-                    var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
-                    stream.Write(returnBuffer, 0, returnBuffer.Length);
-                }
+                break;
             }
-            else
-            {
-                var response = new HttpResponse("HTTP/1.1 404 Not Found");
-                var returnBuffer = Encoding.ASCII.GetBytes(response.ToString());
-                stream.Write(returnBuffer, 0, returnBuffer.Length);
-            }
+
+            var rawHttpRequest = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+            Console.WriteLine($"Received: {rawHttpRequest}");
+
+            var httpRequest = HttpRequestParser.Parse(rawHttpRequest, routes);
+            var response = HttpResponseBuilder.Build(httpRequest);
+            await HttpResponseHandler.Respond(socket, response);
         }
     }
-
-    Request HandleRequest(string httpRequest)
+    catch (SocketException socketException)
     {
-        var request = new Request();
-        var requestLines = httpRequest.Split(["\n", "\r\n"], StringSplitOptions.RemoveEmptyEntries);
-        var requestHeader = request.Headers;
-    
+        Console.WriteLine($"Socket Exception: {socketException}");
+        throw;
+    }
+}
+
+public abstract class HttpRequestParser()
+{
+    public static HttpRequest Parse(string rawHttpRequest, Dictionary<string, Routes> routes)
+    {
+        var httpRequest = new HttpRequest();
+        var requestLines = rawHttpRequest.Split(["\n", "\r\n"], StringSplitOptions.RemoveEmptyEntries);
+        var requestHeader = httpRequest.Headers;
+        
         foreach (var line in requestLines)
         {
-            // Check if the line contains a header, indicated by a colon
             if (line.Contains(':'))
             {
                 // Split the line into header name and value
@@ -139,13 +111,15 @@ void HandleClientConnection(Socket socket)
                                 requestHeader.Address = address;
                             }
                         }
+
                         Console.WriteLine($"Added IP Address to Request Header: {requestHeader.Address}");
-                    
+
                         if (int.TryParse(hostParts[1], out var port))
                         {
                             requestHeader.Port = port;
                             Console.WriteLine($"Added IP Port to Request Header: {requestHeader.Port}");
                         }
+
                         break;
                     case "User-Agent":
                         requestHeader.UserAgent = headerParts[1].Trim();
@@ -156,41 +130,130 @@ void HandleClientConnection(Socket socket)
                         Console.WriteLine($"Added Accept to Request Header: {requestHeader.Accept}");
                         break;
                 }
-            
+
             }
             else
             {
                 // Assuming this is the request line, split it by spaces
                 var requestParts = line.Split(' ');
                 if (requestParts.Length < 3) continue;
-                request.Method = requestParts[0];
-                request.Resource = requestParts[1];
-                request.ProtocolVersion = requestParts[2];
+                httpRequest.Method = requestParts[0];
+                var httpResource = requestParts[1];
+                httpRequest.ProtocolVersion = requestParts[2];
 
-                if (request.Resource.StartsWith(routes["echo"]))
+                if (!"/".StartsWith(httpResource))
                 {
-                    var resourceSplit = request.Resource.Split(new[]
-                        { routes["echo"]}, 2, StringSplitOptions.RemoveEmptyEntries);
-
-                    if (resourceSplit.Length > 0)
+                    httpResource = $"/{httpResource}";
+                }
+                
+                switch (httpRequest.Route)
+                {
+                    case Routes.Echo:
                     {
-                        request.Body = resourceSplit[0][1..];
-                        request.Resource = routes["echo"];
+                        var echoRoute = routes.FirstOrDefault(pair => pair.Value is Routes.Echo).Key;
+                        httpRequest.Body = httpResource[echoRoute.Length..].Trim('/');
+                        httpResource = httpResource[..echoRoute.Length];
+                    
+                        if (routes.TryGetValue(httpResource, out var route))
+                        {
+                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
+                            httpRequest.Route = route;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
+                        }
+
+                        break;
+                    }
+                    case Routes.Files:
+                    {
+                        var fileRoute = routes.FirstOrDefault(pair => pair.Value is Routes.Files).Key;
+                        httpRequest.Body = httpResource[fileRoute.Length..].Trim('/');
+                        httpResource = httpResource[..fileRoute.Length];
+                        if (routes.TryGetValue(httpResource, out var route))
+                        {
+                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
+                            httpRequest.Route = route;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
+                        }
+
+                        break;
+                    }
+                    default:
+                    {
+                        if (routes.TryGetValue(httpResource, out var route))
+                        {
+                            Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
+                            httpRequest.Route = route;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Path: '{httpResource}' does not match any available route");
+                        }
+
+                        break;
                     }
                 }
-            
-                Console.WriteLine($"Method: {request.Method}, Resources: {request.Resource}, Protocol Version: {request.ProtocolVersion}, Request Body: {request.Body}");
+
+                Console.WriteLine(
+                    $"Method: {httpRequest.Method}, Route: {httpRequest.Route}, Protocol Version: {httpRequest.ProtocolVersion}, Request Body: {httpRequest.Body}");
             }
         }
-    
-        return request;
+        return httpRequest;
     }
 }
 
-public record HttpResponse(string Status, string? ContentType = null, int ContentLength = 0, string? Body = null)
+public abstract class HttpResponseHandler()
+{
+    public static async Task Respond(Socket socket, HttpResponse response)
+    {
+        var buffer = Encoding.ASCII.GetBytes(response.ToString());
+        await socket.SendAsync(new ArraySegment<byte>(buffer, 0, buffer.Length), SocketFlags.None);
+    }
+}
+
+public abstract class HttpResponseBuilder()
+{
+    public static HttpResponse Build(HttpRequest httpRequest, string directoryPath)
+    {
+        if (!string.IsNullOrEmpty(directoryPath))
+        {
+            var filePath = Path.Combine(directoryPath, httpRequest.Body);
+            if (File.Exists(filePath))
+            {
+                string fileContent = File.ReadAllText(filePath);
+                httpRequest.StatusCode = (int)HttpStatusCode.OK;
+                httpRequest.Body(fileContent);
+            }
+            else
+            {
+                httpRequest.StatusCode = (int)HttpStatusCode.NotFound;
+            }
+        }
+        return httpRequest.Route switch
+        {
+            Routes.Default => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}"),
+            Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Body),
+            Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Headers.UserAgent),
+            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Body),
+            _ => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
+        };
+    }
+}
+
+public record HttpResponse(string? Status = null, string? ContentType = null, int ContentLength = 0, string? Body = null)
 {
     public HttpResponse(string status, string body) 
         : this(status, "text/plain", body.Length, body)
+    {
+    }
+
+    public HttpResponse(string status)
+        : this(status, null, 0, null)
     {
     }
 
@@ -199,31 +262,53 @@ public record HttpResponse(string Status, string? ContentType = null, int Conten
         var sb = new StringBuilder();
         if (Body == null)
         {
-            sb.AppendLine($"{Status}\r");
-            sb.AppendLine("\r");
+            sb.AppendLine($"{Status}");
+            sb.AppendLine("");
             return sb.ToString();
         }
-        sb.AppendLine($"{Status}\r");
-        sb.AppendLine($"Content-Type: {ContentType}\r");
-        sb.AppendLine($"Content-Length: {ContentLength}\r");
-        sb.AppendLine("\r");
+        sb.AppendLine($"{Status}");
+        sb.AppendLine($"Content-Type: {ContentType}");
+        sb.AppendLine($"Content-Length: {ContentLength}");
+        sb.AppendLine("");
         sb.Append(Body);
         return sb.ToString();
-
-        // $"{Status}\r\n" + // Status line (includes protocol version and status code)"
-        //    $"Content-Type: {ContentType}\r\n" + // Content-Type header
-        //    $"Content-Length: {ContentLength}\r\n" + // Content-Length header
-        //    "\r\n" + // Empty line indicates the end of headers
-        //    Body; // Response body content
     }
 }
-public record Request
+
+public abstract record HttpStatusMessages
 {
+    private static readonly Dictionary<HttpStatusCode, string> StatusMessages = new Dictionary<HttpStatusCode, string>
+    {
+        {HttpStatusCode.OK, "OK"},
+        {HttpStatusCode.NotFound, "Not Found"},
+    };
+
+    public static string GetStatusMessage(HttpStatusCode statusCode)
+    {
+        return StatusMessages.FirstOrDefault(pair => pair.Key == statusCode).Value;
+    }
+}
+
+public enum Routes {Default, Echo, UserAgent, Files}
+public record HttpRequest()
+{
+    private int _statusCode;
     public string Method { get; set; } = string.Empty;
-    public string Resource { get; set; } = string.Empty;
+    public string StatusMessage { get; private set; } = string.Empty;
     public string Body { get; set; } = string.Empty;
     public string ProtocolVersion { get; set; } = string.Empty;
-    public RequestHeader Headers { get; set; } = new RequestHeader();
+    public Routes Route { get; set; }
+    public RequestHeader Headers { get; set; } = new();
+
+    public int StatusCode
+    {
+        get => _statusCode;
+        set
+        {
+            _statusCode = value;
+            StatusMessage = HttpStatusMessages.GetStatusMessage((HttpStatusCode)_statusCode);
+        }
+    }
 }
 
 public record RequestHeader
