@@ -149,6 +149,7 @@ public abstract class HttpRequestParser()
                 else
                 {
                     Console.WriteLine($"Path: '{httpResource}' does not match any available route");
+                    httpRequest.Route = Routes.NotFound;
                 }
 
                 Console.WriteLine(
@@ -216,7 +217,7 @@ public abstract class HttpResponseBuilder()
             Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}","text/plain" ,httpRequest.Body),
             Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "text/plain" ,httpRequest.Headers.UserAgent),
             Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode} {httpRequest.StatusMessage}", "application/octet-stream" , httpRequest.Body),
-            _ => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
+            Routes.NotFound => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
         };
     }
 }
@@ -285,7 +286,7 @@ public abstract record HttpStatusMessages
     }
 }
 
-public enum Routes {Default, Echo, UserAgent, Files}
+public enum Routes {Default, Echo, UserAgent, Files, NotFound}
 public record HttpRequest()
 {
     private int _statusCode;
