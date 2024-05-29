@@ -164,8 +164,8 @@ public abstract class HttpRequestParser()
 
         path = path.TrimStart('/');
         var segments = path.Split('/');
-        resource = $"/{segments[0]}";
-        content = segments[1];
+        resource = segments.Length == 1 ? $"/{segments[0]}" : string.Empty;
+        content = segments.Length == 2 ? segments[1] : string.Empty;
     }
 }
 
