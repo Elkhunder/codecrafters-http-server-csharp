@@ -189,9 +189,12 @@ public abstract class HttpResponseBuilder()
             var filePath = Path.Combine(directoryPath, httpRequest.Body);
             if (File.Exists(filePath))
             {
-                string fileContent = File.ReadAllText(filePath);
+                Console.WriteLine("File Exists");
+                var fileContent = File.ReadAllText(filePath);
+                Console.WriteLine($"File Contents: {fileContent}");
                 httpRequest.StatusCode = (int)HttpStatusCode.OK;
                 httpRequest.Body = fileContent;
+                Console.WriteLine($"Http Body: {httpRequest.Body} - Should match file contents");
             }
             else
             {
