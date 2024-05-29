@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 
 var port = 4221;
@@ -14,9 +13,9 @@ var routes = new Dictionary<string, Routes>()
     {"/files", Routes.Files},
 };
 
-string[] arguments = Environment.GetCommandLineArgs();
-string directoryPath = string.Empty;
-
+var arguments = Environment.GetCommandLineArgs();
+var directoryPath = string.Empty;
+Console.WriteLine($"Arguments Length: {arguments.Length}");
 if (arguments.Length > 0)
 {
     directoryPath = arguments[2];
