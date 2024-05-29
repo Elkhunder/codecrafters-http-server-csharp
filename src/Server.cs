@@ -169,11 +169,11 @@ public abstract class HttpRequestParser()
                     case Routes.Files:
                     {
                         var fileRoute = routes.FirstOrDefault(pair => pair.Value is Routes.Files).Key;
-                        Console.WriteLine(fileRoute);
+                        Console.WriteLine($"FileRoute: {fileRoute}");
                         httpRequest.Body = httpResource[fileRoute.Length..].Trim('/');
-                        Console.WriteLine(httpRequest.Body);
+                        Console.WriteLine($"Request Body: {httpRequest.Body}");
                         httpResource = httpResource[..fileRoute.Length];
-                        Console.WriteLine(httpResource);
+                        Console.WriteLine($"Http Resource: {httpResource}");
                         if (routes.TryGetValue(httpResource, out var route))
                         {
                             Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
