@@ -205,9 +205,9 @@ public abstract class HttpResponseBuilder()
         return httpRequest.Route switch
         {
             Routes.Default => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}"),
-            Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Body),
-            Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", httpRequest.Headers.UserAgent),
-            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", ContentType: "application/octet-stream" , Body: httpRequest.Body),
+            Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}","text/plain" ,httpRequest.Body),
+            Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "text/plain" ,httpRequest.Headers.UserAgent),
+            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "application/octet-stream" , httpRequest.Body),
             _ => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
         };
     }
@@ -215,8 +215,9 @@ public abstract class HttpResponseBuilder()
 
 public record HttpResponse(string? Status = null, string? ContentType = null, int ContentLength = 0, string? Body = null)
 {
-    public HttpResponse(string status, string body) 
-        : this(status, "text/plain", body.Length, body)
+    
+    public HttpResponse(string status, string contentType, string body) 
+        : this(status, contentType, body.Length, body)
     {
     }
 
