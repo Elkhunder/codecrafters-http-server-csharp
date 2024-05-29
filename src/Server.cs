@@ -16,8 +16,12 @@ var routes = new Dictionary<string, Routes>()
 var arguments = Environment.GetCommandLineArgs();
 var directoryPath = string.Empty;
 Console.WriteLine($"Arguments Length: {arguments.Length}, Arguments: {arguments[0]}");
-if (arguments.Length == 2)
+if (arguments.Length > 1)
 {
+    foreach (var arg in arguments)
+    {
+        Console.WriteLine($"Argument: {arg}");
+    }
     directoryPath = arguments[2];
 }
 // You can use print statements as follows for debugging, they'll be visible when running tests.
