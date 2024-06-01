@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 
 namespace codecrafters_http_server.Helpers;
 
@@ -26,5 +27,10 @@ public record ResponseStatusLine(HttpStatusCode StatusCode, string ProtocolVersi
         protocolVersion = ProtocolVersion;
         statusCode = StatusCode;
         reasonPhrase = ReasonPhrase;
+    }
+
+    public override string ToString()
+    {
+        return new StringBuilder().AppendLine($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase}").ToString();
     }
 };

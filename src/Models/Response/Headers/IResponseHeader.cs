@@ -4,5 +4,5 @@ namespace codecrafters_http_server.Helpers;
 
 public interface IResponseHeader
 {
-    public HttpResponseHeader? Name { get; }
+    public HttpResponseHeader Name { get; }
 }

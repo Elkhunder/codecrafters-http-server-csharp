@@ -47,7 +47,7 @@ public abstract class HttpResponseBuilder()
         switch (route.Path)
         {
             case Routes.Default:
-                return ResponseEntity.Empty;
+                return new ResponseEntity([new ResponseHeader<int>(HttpResponseHeader.ContentLength, request.Body.Length)], request.Body);
             case Routes.Echo:
                 return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
             case Routes.UserAgent:

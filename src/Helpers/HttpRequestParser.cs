@@ -37,17 +37,10 @@ namespace codecrafters_http_server.Helpers
         SplitUrl(requestUri, out var path, out var parameter);
         if (routes.TryGetValue(path, out var route))
         {
-            return new Route
-            {
-                Path = route,
-                Parameter = parameter,
-            };
+            return new Route(route, parameter);
         }
-        return new Route
-        {
-            Path = Routes.NotFound,
-            Parameter = string.Empty,
-        };
+
+        return new Route(route, parameter);
     }
     public static RequestLine ParseRequestLine(string requestLine)
     {
@@ -92,9 +85,10 @@ namespace codecrafters_http_server.Helpers
 
         return RequestFile.Empty;
     }
-    public static string ParseRequestBody(string requestBody)
-    {
-    }
+    // public static string ParseRequestBody(string requestBody)
+    // {
+            
+    // }
 }
 }
     

@@ -59,14 +59,14 @@ async Task HandleClientAsync(Socket socket)
 
         while (true)
         {
-            var bytesRead = await socket.ReceiveAsync(buffer, SocketFlags.None);
+            var bytesRead = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.None);
 
             if (bytesRead is 0)
             {
                 break;
             }
 
-            var rawHttpRequest = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+            var rawHttpRequest = Encoding.UTF8.GetString(buffer, 0, bytesRead);
             Console.WriteLine($"Received: {rawHttpRequest}");
 
             HttpRequestParser.Parse(rawHttpRequest, out var requestLine, out var headers, out var requestBody);
@@ -74,14 +74,14 @@ async Task HandleClientAsync(Socket socket)
             var httpRequestHeaders = HttpRequestParser.ParseRequestHeaders(headers);
             var httpRequestRoute = HttpRequestParser.ParseRoute(httpRequestLine.RequestUri, routes);
             var httpRequestFile = HttpRequestParser.ParseRequestFile(directoryPath, httpRequestRoute, httpRequestLine.GetHttpMethod());
-            var httpRequestBody = HttpRequestParser.ParseRequestBody(requestBody);
+            // var httpRequestBody = HttpRequestParser.ParseRequestBody(requestBody);
 
-            var httpRequest = new HttpRequest(httpRequestLine, httpRequestHeaders, httpRequestRoute, httpRequestBody, httpRequestFile);
+            var httpRequest = new HttpRequest(httpRequestLine, httpRequestHeaders, httpRequestRoute, string.Empty, httpRequestFile);
             var responseStatusLine = HttpResponseBuilder.BuildStatusLine(httpRequestRoute, httpRequestLine.GetHttpMethod());
             var responseEntity =
                 HttpResponseBuilder.BuildResponseEntity(httpRequestRoute, httpRequest, httpRequestLine.GetHttpMethod());
             var httpResponse = HttpResponseBuilder.Build(responseStatusLine, responseEntity);
-            HttpResponseHandler.Respond(socket, httpResponse);
+            await HttpResponseHandler.Respond(socket, httpResponse);
         }
     }
     catch (SocketException socketException)

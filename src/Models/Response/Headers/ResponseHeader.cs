@@ -5,7 +5,7 @@ namespace codecrafters_http_server.Helpers;
 
 public record ResponseHeader<T> : IResponseHeader
 {
-    public HttpResponseHeader? Name { get; init; } = null;
+    public HttpResponseHeader Name { get; init; }
     public T Value { get; init; } = default!;
     
     private ResponseHeader(){}
