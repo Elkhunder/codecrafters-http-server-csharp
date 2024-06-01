@@ -10,8 +10,8 @@ public abstract record HttpStatusMessages
         {HttpStatusCode.NotFound, "Not Found"},
     };
 
-    public static string GetStatusMessage(HttpStatusCode statusCode)
+    public static string GetStatusMessage(HttpStatusCode? statusCode)
     {
-        return StatusMessages.FirstOrDefault(pair => pair.Key == statusCode).Value;
+        return StatusMessages.FirstOrDefault(pair => pair.Key == (statusCode ?? 0)).Value;
     }
 }

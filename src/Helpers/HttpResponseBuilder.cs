@@ -1,45 +1,81 @@
 ﻿using System.Net;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace codecrafters_http_server.Helpers;
 
 public abstract class HttpResponseBuilder()
 {
-    public static HttpResponse Build(HttpRequest httpRequest, string directoryPath)
+    public static HttpResponse Build(ResponseStatusLine responseStatusLine, ResponseEntity responseEntity)
     {
-        if (!string.IsNullOrEmpty(directoryPath))
-        {
-            var filePath = Path.Combine(directoryPath, httpRequest.Body);
-            if (File.Exists(filePath))
-            {
-                Console.WriteLine("File Exists");
-                var fileContent = File.ReadAllText(filePath);
-                Console.WriteLine($"File Contents: {fileContent}");
-                httpRequest.StatusCode = (int)HttpStatusCode.OK;
-                httpRequest.Body = fileContent;
-                Console.WriteLine($"Http Body: {httpRequest.Body} - Should match file contents");
-                Console.WriteLine($"Http Body Length: {httpRequest.Body.Length}");
-            }
-            else
-            {
-                Console.WriteLine("File Does Not Exist");
-                httpRequest.StatusCode = (int)HttpStatusCode.NotFound;
-            }
-        }
+        return new HttpResponse(responseStatusLine, responseEntity);
+    }
 
-        if (httpRequest.Route is Routes.Default)
+    public static ResponseStatusLine BuildStatusLine(Route route, HttpMethod method)
+    {
+        switch (route.Path)
         {
-            var response =
-                new HttpResponse(
-                    $"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}");
-            Console.WriteLine($"Response: {response}");
+            case Routes.Default:
+                return new ResponseStatusLine(HttpStatusCode.OK);
+            case Routes.Echo:
+                return new ResponseStatusLine(HttpStatusCode.OK);
+            case Routes.UserAgent:
+                return new ResponseStatusLine(HttpStatusCode.OK);
+            case Routes.Files:
+                if (method == HttpMethod.Get)
+                {
+                    return new ResponseStatusLine(HttpStatusCode.OK);
+                }
+                else if (method == HttpMethod.Post)
+                {
+                    return new ResponseStatusLine(HttpStatusCode.Created);
+                }
+                else
+                {
+                    Console.WriteLine(new NotSupportedException(nameof(method)));
+                    return new ResponseStatusLine(HttpStatusCode.InternalServerError);
+                }
+            case Routes.NotFound:
+                return new ResponseStatusLine(HttpStatusCode.NotFound);
+            default:
+                Console.WriteLine(new NotSupportedException(nameof(route.Path)));
+                return new ResponseStatusLine(HttpStatusCode.InternalServerError);
+        }   
+    }
+
+    public static ResponseEntity BuildResponseEntity(Route route, HttpRequest request, HttpMethod method)
+    {
+        switch (route.Path)
+        {
+            case Routes.Default:
+                return ResponseEntity.Empty;
+            case Routes.Echo:
+                return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
+            case Routes.UserAgent:
+                return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
+            case Routes.Files:
+                if (method == HttpMethod.Get && request.Body is not null)
+                {
+                    return new ResponseEntity([
+                        new ResponseHeader<string>(
+                            HttpResponseHeader.ContentType, Application.Octet),
+                        new ResponseHeader<int>(
+                            HttpResponseHeader.ContentLength, request.Body.Length),
+                        ], request.Body);
+                }
+                else if (method == HttpMethod.Post)
+                {
+                    return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Application.Octet)], request.Body);
+                }
+                else
+                {
+                    Console.WriteLine(new NotSupportedException($"{nameof(route.Path)}, {nameof(method)}"));
+                    return ResponseEntity.Empty;
+                }
+            case Routes.NotFound:
+                return ResponseEntity.Empty;
+            default:
+                Console.WriteLine(new NotSupportedException(nameof(route.Path)));
+                return ResponseEntity.Empty;
         }
-        return httpRequest.Route switch
-        {
-            Routes.Default => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}"),
-            Routes.Echo => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}","text/plain" ,httpRequest.Body),
-            Routes.UserAgent => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.OK} {httpRequest.StatusMessage}", "text/plain" ,httpRequest.Headers.UserAgent),
-            Routes.Files => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode} {httpRequest.StatusMessage}", "application/octet-stream" , httpRequest.Body),
-            Routes.NotFound => new HttpResponse($"{httpRequest.ProtocolVersion} {httpRequest.StatusCode = (int)HttpStatusCode.NotFound} {httpRequest.StatusMessage}"),
-        };
     }
 }

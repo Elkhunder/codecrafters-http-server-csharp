@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Mime;
 using System.Net.Sockets;
 using System.Text;
 using codecrafters_http_server.Helpers;
@@ -68,9 +69,19 @@ async Task HandleClientAsync(Socket socket)
             var rawHttpRequest = Encoding.ASCII.GetString(buffer, 0, bytesRead);
             Console.WriteLine($"Received: {rawHttpRequest}");
 
-            var httpRequest = HttpRequestParser.Parse(rawHttpRequest, routes);
-            var response = HttpResponseBuilder.Build(httpRequest, directoryPath);
-            HttpResponseHandler.Respond(socket, response);
+            HttpRequestParser.Parse(rawHttpRequest, out var requestLine, out var headers, out var requestBody);
+            var httpRequestLine = HttpRequestParser.ParseRequestLine(requestLine);
+            var httpRequestHeaders = HttpRequestParser.ParseRequestHeaders(headers);
+            var httpRequestRoute = HttpRequestParser.ParseRoute(httpRequestLine.RequestUri, routes);
+            var httpRequestFile = HttpRequestParser.ParseRequestFile(directoryPath, httpRequestRoute, httpRequestLine.GetHttpMethod());
+            var httpRequestBody = HttpRequestParser.ParseRequestBody(requestBody);
+
+            var httpRequest = new HttpRequest(httpRequestLine, httpRequestHeaders, httpRequestRoute, httpRequestBody, httpRequestFile);
+            var responseStatusLine = HttpResponseBuilder.BuildStatusLine(httpRequestRoute, httpRequestLine.GetHttpMethod());
+            var responseEntity =
+                HttpResponseBuilder.BuildResponseEntity(httpRequestRoute, httpRequest, httpRequestLine.GetHttpMethod());
+            var httpResponse = HttpResponseBuilder.Build(responseStatusLine, responseEntity);
+            HttpResponseHandler.Respond(socket, httpResponse);
         }
     }
     catch (SocketException socketException)

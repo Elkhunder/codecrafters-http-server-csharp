@@ -4,92 +4,96 @@ namespace codecrafters_http_server.Helpers
 {
     public static class HttpRequestParser
     {
-    public static HttpRequest Parse(string rawHttpRequest, Dictionary<string, Routes> routes)
+    public static void Parse(string rawHttpRequest, out string requestLine, out string[] headers, out string requestBody)
     {
-        var httpRequest = new HttpRequest();
-        var requestLines = rawHttpRequest.Split(["\n", "\r\n"], StringSplitOptions.RemoveEmptyEntries);
-        var requestHeader = httpRequest.Headers;
+        var sections = rawHttpRequest.Split(["\r\n\r\n"], StringSplitOptions.RemoveEmptyEntries);
+        var requestLineAndHeaders = sections[0];
+        requestBody = sections.Length > 1 ? sections[1] : string.Empty;
+        var lines = requestLineAndHeaders.Split(["\r\n"], StringSplitOptions.RemoveEmptyEntries);
+        requestLine = lines[0];
+        headers = lines.Skip(1).ToArray();
         
-        foreach (var line in requestLines)
-        {
-            if (line.Contains(':'))
-            {
-                // Split the line into header name and value
-                var headerParts = line.Split([":"], 2, StringSplitOptions.None);
-                switch (headerParts[0])
-                {
-                    case "Host":
-                        var hostParts = headerParts[1].Split(':');
-                        var hostname = hostParts[0].Trim();
 
-                        if (hostname.Equals("localhost", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            requestHeader.Address = IPAddress.Loopback;
-                        }
-                        else
-                        {
-                            if (IPAddress.TryParse(hostname, out var address))
-                            {
-                                requestHeader.Address = address;
-                            }
-                        }
-
-                        Console.WriteLine($"Added IP Address to Request Header: {requestHeader.Address}");
-
-                        if (int.TryParse(hostParts[1], out var port))
-                        {
-                            requestHeader.Port = port;
-                            Console.WriteLine($"Added IP Port to Request Header: {requestHeader.Port}");
-                        }
-
-                        break;
-                    case "User-Agent":
-                        requestHeader.UserAgent = headerParts[1].Trim();
-                        Console.WriteLine($"Added User Agent to Request Header: {requestHeader.UserAgent}");
-                        break;
-                    case "Accept":
-                        requestHeader.Accept = headerParts[1];
-                        Console.WriteLine($"Added Accept to Request Header: {requestHeader.Accept}");
-                        break;
-                }
-
-            }
-            else
-            {
-                // Assuming this is the request line, split it by spaces
-                var requestParts = line.Split(' ');
-                if (requestParts.Length < 3) continue;
-                httpRequest.Method = requestParts[0];
-                SplitPath(requestParts[1], out var httpResource, out var content);
-                httpRequest.ProtocolVersion = requestParts[2];
-                if (routes.TryGetValue(httpResource, out var route))
-                {
-                    Console.WriteLine($"Path '{httpResource}' maps to Routes.{route}");
-                    httpRequest.Route = route;
-                    httpRequest.Body = content;
-                }
-                else
-                {
-                    Console.WriteLine($"Path: '{httpResource}' does not match any available route");
-                    httpRequest.Route = Routes.NotFound;
-                }
-
-                Console.WriteLine(
-                    $"Method: {httpRequest.Method}, Route: {httpRequest.Route}, Protocol Version: {httpRequest.ProtocolVersion}, Request Body: {httpRequest.Body}");
-            }
-        }
-        return httpRequest;
+        // ParseRequestLine(lines[0], httpRequest, routes);
+        // ParseRoute(httpRequest.RequestLine.RequestUri, routes);
+        // ParseRequestHeaders(headers);
+        // ParseRequestFile();
+        // ParseRequestBody();
     }
 
-    private static void SplitPath(string path, out string resource, out string content)
+    private static void SplitUrl(string url, out string path, out string pathParameter)
     {
-        resource = string.Empty;
-        content = string.Empty;
+        path = string.Empty;
+        pathParameter = string.Empty;
 
-        path = path.TrimStart('/');
-        var segments = path.Split('/');
-        resource = segments.Length > 0 ? $"/{segments[0]}" : string.Empty;
-        content = segments.Length > 1 ? segments[1] : string.Empty;
+        url = url.TrimStart('/');
+        var segments = url.Split('/');
+        path = segments.Length > 0 ? $"/{segments[0]}" : string.Empty;
+        pathParameter = segments.Length > 1 ? segments[1] : string.Empty;
+    }
+
+    public static Route ParseRoute(string requestUri, Dictionary<string, Routes> routes)
+    {
+        SplitUrl(requestUri, out var path, out var parameter);
+        if (routes.TryGetValue(path, out var route))
+        {
+            return new Route
+            {
+                Path = route,
+                Parameter = parameter,
+            };
+        }
+        return new Route
+        {
+            Path = Routes.NotFound,
+            Parameter = string.Empty,
+        };
+    }
+    public static RequestLine ParseRequestLine(string requestLine)
+    {
+        var lineSegments = requestLine.Split(' ');
+        if (lineSegments.Length >= 3)
+        {
+            return new RequestLine
+            (
+                lineSegments[0],
+                lineSegments[1],
+                lineSegments[2]
+            );
+        }
+        
+        return RequestLine.Empty();
+    }
+    public static List<RequestHeader> ParseRequestHeaders(string[] headers)
+    {
+        return headers.Select
+        (
+            header => 
+                header.Split([":"], 2, StringSplitOptions.None)).Select(headerParts => 
+            new RequestHeader(headerParts[0].Trim(), headerParts[1].Trim())
+        ).ToList();
+    }
+
+    public static RequestFile ParseRequestFile(string directory, Route route, HttpMethod method)
+    {
+        if (route.Path != Routes.Files) return RequestFile.Empty;
+        var fileName = route.Parameter;
+                    
+        var filePath = Path.Combine(directory, fileName);
+                    
+        if (method == HttpMethod.Get)
+        {
+            return new RequestFile(directory, fileName, File.ReadAllText(filePath));
+        }
+        else if (method == HttpMethod.Post)
+        {
+            return new RequestFile(directory, fileName, string.Empty);
+        }
+
+        return RequestFile.Empty;
+    }
+    public static string ParseRequestBody(string requestBody)
+    {
     }
 }
 }

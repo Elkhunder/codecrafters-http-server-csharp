@@ -1,0 +1,30 @@
+﻿using System.Net;
+
+namespace codecrafters_http_server.Helpers;
+
+public record ResponseStatusLine(HttpStatusCode StatusCode, string ProtocolVersion = "HTTP/1.1")
+{
+    public string ProtocolVersion { get; set; } = ProtocolVersion;
+    public HttpStatusCode StatusCode { get; set; } = StatusCode;
+    public string ReasonPhrase { get; set; } = StatusCode.ToString();
+    
+    public void Deconstruct(
+        out string protocolVersion,
+        out int statusCode,
+        out string reasonPhrase)
+    {
+        protocolVersion = ProtocolVersion;
+        statusCode = (int)StatusCode;
+        reasonPhrase = ReasonPhrase;
+    }
+    
+    public void Deconstruct(
+        out string protocolVersion,
+        out HttpStatusCode statusCode,
+        out string reasonPhrase)
+    {
+        protocolVersion = ProtocolVersion;
+        statusCode = StatusCode;
+        reasonPhrase = ReasonPhrase;
+    }
+};

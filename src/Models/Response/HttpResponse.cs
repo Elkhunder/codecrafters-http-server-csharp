@@ -1,35 +1,28 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Net.Mime;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace codecrafters_http_server.Helpers;
 
-public record HttpResponse(string? Status = null, string? ContentType = null, int ContentLength = 0, string? Body = null)
+public record HttpResponse(ResponseStatusLine StatusLine, ResponseEntity ResponseEntity)
 {
+    public ResponseStatusLine StatusLine { get; set; } = StatusLine;
+    public ResponseEntity ResponseEntity { get; set; } = ResponseEntity;
     
-    public HttpResponse(string status, string contentType, string body) 
-        : this(status, contentType, body.Length, body)
-    {
-    }
-
-    public HttpResponse(string status)
-        : this(status, null, 0, null)
-    {
-    }
-
     public override string ToString()
     {
         
         var sb = new StringBuilder();
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            if (Body == null)
+            if (ResponseEntity?.Body == null)
             {
                 sb.AppendLine($"{Status}");
                 sb.AppendLine("");
                 return sb.ToString();
             }
-            sb.AppendLine($"{Status}");
-            sb.AppendLine($"Content-Type: {ContentType}");
+            sb.AppendLine(StatusLine);
+            sb.AppendLine(ResponseEntity.Headers.FirstOrDefault(header => header.Name == ContentType);
             sb.AppendLine($"Content-Length: {ContentLength}");
             sb.AppendLine("");
             sb.Append(Body);
@@ -51,4 +44,4 @@ public record HttpResponse(string? Status = null, string? ContentType = null, in
             return sb.ToString();
         }
     }
-}
+};
