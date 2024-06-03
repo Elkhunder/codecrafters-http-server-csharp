@@ -26,7 +26,7 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
             }
         }
 
-        if (string.IsNullOrEmpty(Body)) return sb.ToString();
+        // if (string.IsNullOrEmpty(Body)) return sb.ToString();
         Console.WriteLine("######Body has content appending new line after headers and adding body");
         sb.Append("\r\n");
         sb.Append(Body);
