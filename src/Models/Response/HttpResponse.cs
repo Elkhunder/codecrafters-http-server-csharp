@@ -12,7 +12,6 @@ public record HttpResponse(ResponseStatusLine StatusLine, ResponseEntity Respons
     public override string ToString()
     {
         return $"{StatusLine}" +
-               $"\r\n" +
                $"{ResponseEntity}";
     }
 };
