@@ -10,7 +10,13 @@ public abstract class HttpResponseHandler()
         try
         {
             var buffer = Encoding.ASCII.GetBytes(httpResponse.ToString());
-            Console.WriteLine($"{nameof(HttpResponseHandler)}\r\n{nameof(HttpResponse)}: {httpResponse}\r\n{nameof(Encoding.UTF8)}-{nameof(Encoding.UTF8.GetBytes)}: {buffer}\r\n{nameof(ArraySegment<byte>)}: {new ArraySegment<byte>(buffer).ToString()}");
+            Console.WriteLine($"###{nameof(HttpResponseHandler)}" +
+                              $"#####\r\n" +
+                              $"#####{nameof(HttpResponse)}: {httpResponse}" +
+                              $"#####\r\n" +
+                              $"#####{nameof(Encoding.UTF8)}-{nameof(Encoding.UTF8.GetBytes)}: {buffer}" +
+                              $"#####\r\n" +
+                              $"#####{nameof(ArraySegment<byte>)}: {new ArraySegment<byte>(buffer).ToString()}");
             var sb = new StringBuilder();
             foreach (var b in  buffer)
             {

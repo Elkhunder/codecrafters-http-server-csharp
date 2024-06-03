@@ -62,7 +62,11 @@ public abstract class HttpResponseBuilder()
                 var file = request.RequestFile;
                 if (method == HttpMethod.Get && file.FileValidated && !string.IsNullOrEmpty(file.Contents))
                 {
-                    Console.WriteLine($"{nameof(HttpResponseBuilder)}\r\n{nameof(RequestFile)}-{nameof(RequestFile.Contents)}: {request.RequestFile.Contents} {nameof(RequestFile.Contents)}-{nameof(RequestFile.Contents.Length)}: {request.RequestFile.Contents.Length}");
+                    Console.WriteLine($"###{nameof(HttpResponseBuilder)}\r\n" +
+                                      $"#####{nameof(RequestFile)}-{nameof(RequestFile.Contents)}: {request.RequestFile.Contents}" +
+                                      $"\r\n" +
+                                      $"#####{nameof(RequestFile.Contents)}-{nameof(RequestFile.Contents.Length)}: {request.RequestFile.Contents.Length}" +
+                                      $"\r\n");
                     return new ResponseEntity([
                         new ResponseHeader<string>(
                             HttpResponseHeader.ContentType, Application.Octet),
