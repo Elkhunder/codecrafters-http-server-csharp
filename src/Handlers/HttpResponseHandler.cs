@@ -10,9 +10,9 @@ public abstract class HttpResponseHandler()
         try
         {
             var buffer = Encoding.ASCII.GetBytes(httpResponse.ToString());
-            Console.WriteLine($"###{nameof(HttpResponseHandler)}" +
-                              $"#####\r\n" +
-                              $"#####{nameof(HttpResponse)}: {httpResponse}");
+            Console.WriteLine($"###{nameof(HttpResponseHandler)}###\r\n" +
+                              $"#####{nameof(HttpResponse)}#####" +
+                              $"{httpResponse}");
             Console.WriteLine();
             var bytesSent = await socket.SendAsync(buffer, SocketFlags.None);
             Console.WriteLine($"Bytes Sent: {bytesSent}");
