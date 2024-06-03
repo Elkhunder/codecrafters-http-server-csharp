@@ -53,16 +53,26 @@ public abstract class HttpResponseBuilder()
         switch (route.Path)
         {
             case Routes.Default:
-                return new ResponseEntity([new ResponseHeader<int>(HttpResponseHeader.ContentLength, request.Body.Length)], request.Body);
+                return new ResponseEntity([
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, request.Body.Length)], request.Body);
+            
             case Routes.Echo:
-                return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
-            case Routes.UserAgent:
-                var userAgentHeader = request.Headers.First(header => header.Name == "User-Agent");
+                var echo = request.Route.Parameter;
                 return new ResponseEntity([
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
-                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, userAgentHeader.Value.Length)], userAgentHeader.Value);
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)], echo);
+            
+            case Routes.UserAgent:
+                var userAgent = request.Headers.First(header => header.Name == "User-Agent").Value;
+                
+                return new ResponseEntity([
+                    new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
+                    
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, userAgent.Length)], userAgent);
+            
             case Routes.Files:
                 var file = request.RequestFile;
+                
                 if (method == HttpMethod.Get && file.FileValidated && !string.IsNullOrEmpty(file.Contents))
                 {
                     Console.WriteLine($"###{nameof(HttpResponseBuilder)}\r\n" +
@@ -70,11 +80,14 @@ public abstract class HttpResponseBuilder()
                                       $"\r\n" +
                                       $"#####{nameof(RequestFile.Contents)}-{nameof(RequestFile.Contents.Length)}: {request.RequestFile.Contents.Length}" +
                                       $"\r\n");
+                    
                     return new ResponseEntity([
                         new ResponseHeader<string>(
                             HttpResponseHeader.Connection, "close"),
+                        
                         new ResponseHeader<string>(
                             HttpResponseHeader.ContentType, Application.Octet),
+                        
                         new ResponseHeader<int>(
                             HttpResponseHeader.ContentLength, request.RequestFile.Contents.Length),
                         ], request.RequestFile.Contents);
@@ -84,6 +97,7 @@ public abstract class HttpResponseBuilder()
                 {
                     return new ResponseEntity([
                         new ResponseHeader<string>(HttpResponseHeader.Connection, "close"),
+                        
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, 0)
                     ], request.RequestFile.Contents);
                 }
