@@ -17,17 +17,17 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
             switch (header)
             {
                 case ResponseHeader<int> intResponseHeader when HeaderDictionary.TryGetValue(header.Name, out var intValue):
-                    sb.AppendLine($"{intValue}: {intResponseHeader.Value}");
+                    sb.Append($"{intValue}: {intResponseHeader.Value}\r\n");
                     break;
                 case ResponseHeader<string> stringResponseHeader when
                     HeaderDictionary.TryGetValue(header.Name, out var stringValue):
-                    sb.AppendLine($"{stringValue}: {stringResponseHeader.Value}");
+                    sb.Append($"{stringValue}: {stringResponseHeader.Value}\r\n");
                     break;
             }
         }
 
-        if (Body is null) return sb.ToString();
-        sb.AppendLine("");
+        if (string.IsNullOrEmpty(Body)) return sb.ToString();
+        sb.Append("\r\n");
         sb.AppendLine(Body);
         return sb.ToString();
     }

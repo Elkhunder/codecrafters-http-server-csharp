@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using codecrafters_http_server.Handlers;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace codecrafters_http_server.Helpers;
@@ -10,7 +11,7 @@ public abstract class HttpResponseBuilder()
         return new HttpResponse(responseStatusLine, responseEntity);
     }
 
-    public static ResponseStatusLine BuildStatusLine(Route route, HttpMethod method)
+    public static ResponseStatusLine BuildStatusLine(Route route, HttpMethod method, HttpRequest request)
     {
         switch (route.Path)
         {
@@ -21,9 +22,14 @@ public abstract class HttpResponseBuilder()
             case Routes.UserAgent:
                 return new ResponseStatusLine(HttpStatusCode.OK);
             case Routes.Files:
-                if (method == HttpMethod.Get)
+                var file = request.RequestFile;
+                if (method == HttpMethod.Get && file.FileValidated)
                 {
                     return new ResponseStatusLine(HttpStatusCode.OK);
+                }
+                else if (method == HttpMethod.Get && !file.FileValidated)
+                {
+                    return new ResponseStatusLine(HttpStatusCode.NotFound);
                 }
                 else if (method == HttpMethod.Post)
                 {
@@ -53,22 +59,29 @@ public abstract class HttpResponseBuilder()
             case Routes.UserAgent:
                 return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
             case Routes.Files:
-                if (method == HttpMethod.Get && request.Body is not null)
+                var file = request.RequestFile;
+                if (method == HttpMethod.Get && file.FileValidated && !string.IsNullOrEmpty(file.Contents))
                 {
+                    Console.WriteLine($"{nameof(HttpResponseBuilder)}\r\n{nameof(RequestFile)}-{nameof(RequestFile.Contents)}: {request.RequestFile.Contents} {nameof(RequestFile.Contents)}-{nameof(RequestFile.Contents.Length)}: {request.RequestFile.Contents.Length}");
                     return new ResponseEntity([
                         new ResponseHeader<string>(
                             HttpResponseHeader.ContentType, Application.Octet),
                         new ResponseHeader<int>(
-                            HttpResponseHeader.ContentLength, request.Body.Length),
-                        ], request.Body);
+                            HttpResponseHeader.ContentLength, request.RequestFile.Contents.Length),
+                        ], request.RequestFile.Contents);
                 }
-                else if (method == HttpMethod.Post)
+                else if (method == HttpMethod.Post && file.FileValidated)
                 {
                     return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Application.Octet)], request.Body);
                 }
                 else
                 {
-                    Console.WriteLine(new NotSupportedException($"{nameof(route.Path)}, {nameof(method)}"));
+                    Console.WriteLine(new NotSupportedException
+                        (
+                            $"{nameof(route.Path)}: {route.Path}, " +
+                            $"{nameof(method)}: {method}, " +
+                            $"{nameof(request.RequestFile)}-{nameof(request.RequestFile.Contents)}-{nameof(request.RequestFile.Contents.Length)}: {request.RequestFile.Contents.Length}"
+                        ));
                     return ResponseEntity.Empty;
                 }
             case Routes.NotFound:

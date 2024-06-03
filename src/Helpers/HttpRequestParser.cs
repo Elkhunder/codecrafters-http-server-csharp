@@ -1,4 +1,4 @@
-﻿using System.Net;
+﻿using codecrafters_http_server.Handlers;
 
 namespace codecrafters_http_server.Helpers
 {
@@ -67,28 +67,35 @@ namespace codecrafters_http_server.Helpers
         ).ToList();
     }
 
-    public static RequestFile ParseRequestFile(string directory, Route route, HttpMethod method)
+    public static RequestFile ParseRequestFile(string directory, Route route, HttpMethod method, string contents)
     {
+        Console.WriteLine($"Route: {route.Path}, Method: {method}, Directory: {directory}, File: {route.Parameter}");
         if (route.Path != Routes.Files) return RequestFile.Empty;
         var fileName = route.Parameter;
-                    
-        var filePath = Path.Combine(directory, fileName);
-                    
+        var fileHandler = new FileHandler(directory, fileName);            
         if (method == HttpMethod.Get)
         {
-            return new RequestFile(directory, fileName, File.ReadAllText(filePath));
+            contents = fileHandler.GetFileContents();
+            Console.WriteLine($"{nameof(ParseRequestFile)}-{nameof(HttpMethod.Get)} {nameof(FileHandler.ValidateFile)}: {fileHandler.FileValidated} {nameof(contents)}: {contents}, {nameof(contents.Length)}: {contents.Length}");
+            return new RequestFile(directory, fileName, contents, fileHandler.FileValidated);
         }
         else if (method == HttpMethod.Post)
         {
-            return new RequestFile(directory, fileName, string.Empty);
+            fileHandler.SaveFileContents(contents);
+            Console.WriteLine($"File Saved!  File-Contents: {contents}");
+            return new RequestFile(directory, fileName, string.Empty, fileHandler.FileValidated);
         }
 
         return RequestFile.Empty;
     }
-    // public static string ParseRequestBody(string requestBody)
-    // {
-            
-    // }
+    public static string ParseRequestBody(string requestBody)
+    {
+        return requestBody.Length switch
+        {
+            0 => string.Empty,
+            _ => requestBody
+        };
+    }
 }
 }
     

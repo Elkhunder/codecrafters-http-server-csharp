@@ -31,6 +31,6 @@ public record ResponseStatusLine(HttpStatusCode StatusCode, string ProtocolVersi
 
     public override string ToString()
     {
-        return new StringBuilder().AppendLine($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase}").ToString();
+        return new StringBuilder().Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase}\r\n").ToString();
     }
 };

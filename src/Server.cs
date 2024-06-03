@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Mime;
 using System.Net.Sockets;
 using System.Text;
 using codecrafters_http_server.Helpers;
@@ -73,11 +72,11 @@ async Task HandleClientAsync(Socket socket)
             var httpRequestLine = HttpRequestParser.ParseRequestLine(requestLine);
             var httpRequestHeaders = HttpRequestParser.ParseRequestHeaders(headers);
             var httpRequestRoute = HttpRequestParser.ParseRoute(httpRequestLine.RequestUri, routes);
-            var httpRequestFile = HttpRequestParser.ParseRequestFile(directoryPath, httpRequestRoute, httpRequestLine.GetHttpMethod());
-            // var httpRequestBody = HttpRequestParser.ParseRequestBody(requestBody);
+            var httpRequestFile = HttpRequestParser.ParseRequestFile(directoryPath, httpRequestRoute, httpRequestLine.GetHttpMethod(), requestBody);
+            var httpRequestBody = HttpRequestParser.ParseRequestBody(requestBody);
 
-            var httpRequest = new HttpRequest(httpRequestLine, httpRequestHeaders, httpRequestRoute, string.Empty, httpRequestFile);
-            var responseStatusLine = HttpResponseBuilder.BuildStatusLine(httpRequestRoute, httpRequestLine.GetHttpMethod());
+            var httpRequest = new HttpRequest(httpRequestLine, httpRequestHeaders, httpRequestRoute, httpRequestBody, httpRequestFile);
+            var responseStatusLine = HttpResponseBuilder.BuildStatusLine(httpRequestRoute, httpRequestLine.GetHttpMethod(), httpRequest);
             var responseEntity =
                 HttpResponseBuilder.BuildResponseEntity(httpRequestRoute, httpRequest, httpRequestLine.GetHttpMethod());
             var httpResponse = HttpResponseBuilder.Build(responseStatusLine, responseEntity);

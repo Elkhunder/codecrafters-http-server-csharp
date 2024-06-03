@@ -1,33 +1,36 @@
-﻿namespace codecrafters_http_server.Helpers;
+﻿namespace codecrafters_http_server.Handlers;
 
-public class FileHandler(string directory, HttpRequest httpRequest)
+public class FileHandler(string directory, string fileName)
 {
-    private readonly string _directory = directory;
-    private HttpRequest _httpRequest = httpRequest;
+    private readonly string _path = Path.Combine(directory, fileName);
+    public bool FileValidated = false;
     
-    public string? GetFileContents()
+    public string GetFileContents()
     {
-        if (_directory is null || _httpRequest.Route is null) throw new NullReferenceException();
-        var path = Path.Combine(_directory, _httpRequest.Route.Parameter);
-        return !ValidateFile(path) ? null : File.ReadAllText(path);
+        FileValidated = ValidateFile();
+        if (!FileValidated) return string.Empty;
+        var file = File.ReadAllText(_path);
+        Console.WriteLine($"{nameof(FileHandler)}\r\n Path: {_path}, {nameof(ValidateFile)}: {ValidateFile()}, {nameof(file)}: {file}, {nameof(file.Length)}: {file.Length}");
+        return file;
     }
 
-    public bool SaveFileContents(string fileContents, string directory, string fileName)
+    public bool SaveFileContents(string fileContents)
     {
-        var path = Path.Combine(directory, fileName);
         try
         {
-            File.WriteAllText(path, fileContents);
-            return true;
+            File.WriteAllText(_path, fileContents);
+            FileValidated = ValidateFile();
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw;
         }
+
+        return ValidateFile();
     }
-    private bool ValidateFile(string path)
+    public bool ValidateFile()
     {
-        return Path.Exists(path);
+        return Path.Exists(_path);
     }
 }
