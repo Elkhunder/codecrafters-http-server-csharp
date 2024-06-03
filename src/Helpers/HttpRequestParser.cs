@@ -40,7 +40,7 @@ namespace codecrafters_http_server.Helpers
             return new Route(route, parameter);
         }
 
-        return new Route(route, parameter);
+        return new Route(Routes.NotFound, parameter);
     }
     public static RequestLine ParseRequestLine(string requestLine)
     {
