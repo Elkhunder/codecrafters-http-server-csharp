@@ -33,14 +33,8 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
         return sb.ToString();
     }
 
-    private record HeaderType
-    {
-        public int? IntValue { get; init; }
-        public string? StringValue { get; init; }
-    }
-
     private static readonly Dictionary<HttpResponseHeader, string> HeaderDictionary =
-        new Dictionary<HttpResponseHeader, string>()
+        new()
         {
             { HttpResponseHeader.ContentType, "Content-Type" },
             { HttpResponseHeader.ContentLength, "Content-Length" }
