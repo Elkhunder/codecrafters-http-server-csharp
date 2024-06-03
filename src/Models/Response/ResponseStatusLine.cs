@@ -34,7 +34,7 @@ public record ResponseStatusLine(HttpStatusCode StatusCode, string ProtocolVersi
         if (StatusCode is HttpStatusCode.NotFound)
         {
             return new StringBuilder()
-                .Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase.Insert(3, " ")}")
+                .Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase.Insert(3, " ")}\r\n")
                 .ToString();
         }
         return new StringBuilder()
