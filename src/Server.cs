@@ -19,6 +19,8 @@ var directoryPath = string.Empty;
 if (arguments.Length == 3)
 {
     directoryPath = arguments[2];
+    Console.WriteLine($"Command Args: Directory");
+    Console.WriteLine($"Directory: {directoryPath}");
 }
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 Console.WriteLine("Logs from your program will appear here!");
@@ -29,7 +31,6 @@ try
 
     server.Start();
     Console.WriteLine($"Server is listening on port: {port}");
-
     while (true)
     {
         Console.WriteLine("Waiting for connection...");
@@ -80,7 +81,7 @@ async Task HandleClientAsync(Socket socket)
             var responseEntity =
                 HttpResponseBuilder.BuildResponseEntity(httpRequestRoute, httpRequest, httpRequestLine.GetHttpMethod());
             var httpResponse = HttpResponseBuilder.Build(responseStatusLine, responseEntity);
-            await HttpResponseHandler.Respond(socket, httpResponse);
+            HttpResponseHandler.Respond(socket, httpResponse);
         }
     }
     catch (SocketException socketException)

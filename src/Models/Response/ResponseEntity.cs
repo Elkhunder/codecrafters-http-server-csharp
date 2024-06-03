@@ -37,6 +37,7 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
         new()
         {
             { HttpResponseHeader.ContentType, "Content-Type" },
-            { HttpResponseHeader.ContentLength, "Content-Length" }
+            { HttpResponseHeader.ContentLength, "Content-Length" },
+            { HttpResponseHeader.Connection , "Connection"}
         };
 }

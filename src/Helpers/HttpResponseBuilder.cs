@@ -69,6 +69,8 @@ public abstract class HttpResponseBuilder()
                                       $"\r\n");
                     return new ResponseEntity([
                         new ResponseHeader<string>(
+                            HttpResponseHeader.Connection, "close"),
+                        new ResponseHeader<string>(
                             HttpResponseHeader.ContentType, Application.Octet),
                         new ResponseHeader<int>(
                             HttpResponseHeader.ContentLength, request.RequestFile.Contents.Length),
