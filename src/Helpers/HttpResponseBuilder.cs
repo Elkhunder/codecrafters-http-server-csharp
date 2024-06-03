@@ -57,7 +57,10 @@ public abstract class HttpResponseBuilder()
             case Routes.Echo:
                 return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
             case Routes.UserAgent:
-                return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain)], request.Body);
+                var userAgentHeader = request.Headers.First(header => header.Name == "User-Agent");
+                return new ResponseEntity([
+                    new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, userAgentHeader.Value.Length)], userAgentHeader.Value);
             case Routes.Files:
                 var file = request.RequestFile;
                 if (method == HttpMethod.Get && file.FileValidated && !string.IsNullOrEmpty(file.Contents))
