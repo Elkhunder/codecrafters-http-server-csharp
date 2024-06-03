@@ -31,6 +31,14 @@ public record ResponseStatusLine(HttpStatusCode StatusCode, string ProtocolVersi
 
     public override string ToString()
     {
-        return new StringBuilder().Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase}\r\n").ToString();
+        if (StatusCode is HttpStatusCode.NotFound)
+        {
+            return new StringBuilder()
+                .Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase.Insert(3, " ")}")
+                .ToString();
+        }
+        return new StringBuilder()
+            .Append($"{ProtocolVersion} {(int)StatusCode} {ReasonPhrase}\r\n")
+            .ToString();
     }
 };
