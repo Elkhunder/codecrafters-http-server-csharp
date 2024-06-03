@@ -76,6 +76,14 @@ public abstract class HttpResponseBuilder()
                             HttpResponseHeader.ContentLength, request.RequestFile.Contents.Length),
                         ], request.RequestFile.Contents);
                 }
+
+                if (method == HttpMethod.Get && !file.FileValidated)
+                {
+                    return new ResponseEntity([
+                        new ResponseHeader<string>(HttpResponseHeader.Connection, "close"),
+                        new ResponseHeader<int>(HttpResponseHeader.ContentLength, 0)
+                    ], request.RequestFile.Contents);
+                }
                 else if (method == HttpMethod.Post && file.FileValidated)
                 {
                     return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Application.Octet)], request.Body);
