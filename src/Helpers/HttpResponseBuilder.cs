@@ -63,6 +63,7 @@ public abstract class HttpResponseBuilder()
                 var encodingHeader = request.Headers.FirstOrDefault(header => header.HttpRequestHeader is HttpRequestHeader.AcceptEncoding);
                 if (encodingHeader is not null)
                 {
+                    Console.WriteLine($"$Accept Encoding Header set, {encodingHeader}");
                     return new ResponseEntity([
                         new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, DecompressionMethods.GZip.ToString()),
                         new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
