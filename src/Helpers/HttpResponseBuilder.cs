@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Net;
+using System.Net.Mime;
 using codecrafters_http_server.Dictionaries;
 using codecrafters_http_server.Extensions;
 using static System.Net.Mime.MediaTypeNames;
@@ -61,19 +62,20 @@ public abstract class HttpResponseBuilder()
             case Routes.Echo:
                 var echo = request.Route.Parameter;
                 var encodingHeader = request.Headers.FirstOrDefault(header => header.Name is "Accept-Encoding");
-                if (encodingHeader is not null)
-                {
-                    Console.WriteLine($"$Accept Encoding Header set, {encodingHeader}");
+
+                if (encodingHeader is null || !Enum.GetNames(typeof(EncodingProvider))
+                        .Any(name =>
+                            string.Equals(name, encodingHeader.Value, StringComparison.CurrentCultureIgnoreCase)))
                     return new ResponseEntity([
-                        new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, DecompressionMethods.GZip.ToString()),
                         new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
                     ], echo);
-                }
-                
+                Console.WriteLine($"$Accept Encoding Header set, {encodingHeader}");
                 return new ResponseEntity([
+                    new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, DecompressionMethods.GZip.ToString()),
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
-                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)], echo);
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
+                ], echo);
 
             case Routes.UserAgent:
                 var userAgent = request.Headers.First(header => header.Name == "User-Agent").Value;
