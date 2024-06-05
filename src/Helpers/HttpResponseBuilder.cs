@@ -60,7 +60,7 @@ public abstract class HttpResponseBuilder()
             
             case Routes.Echo:
                 var echo = request.Route.Parameter;
-                var encodingHeader = request.Headers.FirstOrDefault(header => header.HttpRequestHeader is HttpRequestHeader.AcceptEncoding);
+                var encodingHeader = request.Headers.FirstOrDefault(header => header.Name is "Accept-Encoding");
                 if (encodingHeader is not null)
                 {
                     Console.WriteLine($"$Accept Encoding Header set, {encodingHeader}");
