@@ -32,7 +32,7 @@ namespace codecrafters_http_server.Helpers
         pathParameter = segments.Length > 1 ? segments[1] : string.Empty;
     }
 
-    public static Route ParseRoute(string requestUri, Dictionary<string, Routes> routes)
+    public static Route ParseRoute(string requestUri, Dictionary<string, Routes> routes) 
     {
         SplitUrl(requestUri, out var path, out var parameter);
         if (routes.TryGetValue(path, out var route))

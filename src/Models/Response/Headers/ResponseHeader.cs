@@ -1,20 +1,24 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
+using codecrafters_http_server.Dictionaries;
 
 namespace codecrafters_http_server.Helpers;
 
-public record ResponseHeader<T> : IResponseHeader
+public record ResponseHeader<T>(HttpResponseHeader HttpResponseHeader = default!, T Value = default!) : IResponseHeader
 {
-    public HttpResponseHeader Name { get; init; }
-    public T Value { get; init; } = default!;
-    
-    private ResponseHeader(){}
+    private string? _headerName;
 
-    public ResponseHeader(HttpResponseHeader name, T value)
-    {
-        Name = name;
-        Value = value;
-    }
+    public string? HeaderName => _headerName = HttpResponseHeader.ToHttpHeader(); 
 
     public static ResponseHeader<T> Empty => new ResponseHeader<T>();
+    
+    // private static HttpResponseHeader? SetHttpResponseHeader(string headerName)
+    // {
+    //     if (Enum.TryParse<HttpResponseHeader>(headerName, out var httpResponseHeader))
+    //     {
+    //         return httpResponseHeader;
+    //     }
+    //
+    //     return null;
+    // }
 }

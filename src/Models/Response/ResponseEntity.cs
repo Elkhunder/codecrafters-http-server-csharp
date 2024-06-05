@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
+using static codecrafters_http_server.Dictionaries.HeaderExtensions;
 
 namespace codecrafters_http_server.Helpers;
 
@@ -16,12 +17,11 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
         {
             switch (header)
             {
-                case ResponseHeader<int> intResponseHeader when HeaderDictionary.TryGetValue(header.Name, out var intValue):
-                    sb.Append($"{intValue}: {intResponseHeader.Value}\r\n");
+                case ResponseHeader<int> intResponseHeader:
+                    sb.Append($"{intResponseHeader.HeaderName}: {intResponseHeader.Value}\r\n");
                     break;
-                case ResponseHeader<string> stringResponseHeader when
-                    HeaderDictionary.TryGetValue(header.Name, out var stringValue):
-                    sb.Append($"{stringValue}: {stringResponseHeader.Value}\r\n");
+                case ResponseHeader<string> stringResponseHeader:
+                    sb.Append($"{stringResponseHeader.HeaderName}: {stringResponseHeader.Value}\r\n");
                     break;
             }
         }
@@ -33,11 +33,5 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
         return sb.ToString();
     }
 
-    private static readonly Dictionary<HttpResponseHeader, string> HeaderDictionary =
-        new()
-        {
-            { HttpResponseHeader.ContentType, "Content-Type" },
-            { HttpResponseHeader.ContentLength, "Content-Length" },
-            { HttpResponseHeader.Connection , "Connection"}
-        };
+    
 }
