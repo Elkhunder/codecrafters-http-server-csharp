@@ -5,7 +5,7 @@ using static codecrafters_http_server.Dictionaries.HeaderExtensions;
 
 namespace codecrafters_http_server.Helpers;
 
-public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
+public record ResponseEntity(List<IResponseHeader> Headers, byte[]? Body)
 {
     public static ResponseEntity Empty => new ResponseEntity([], null);
 
@@ -29,7 +29,6 @@ public record ResponseEntity(List<IResponseHeader> Headers, string? Body)
         // if (string.IsNullOrEmpty(Body)) return sb.ToString();
         Console.WriteLine("######Body has content appending new line after headers and adding body");
         sb.Append("\r\n");
-        sb.Append(Body);
         return sb.ToString();
     }
 

@@ -2,7 +2,7 @@
 
 namespace codecrafters_http_server.Helpers;
 
-public record RequestHeader(string Name, List<string> Values)
+public record RequestHeader(string Name, List<string> Values) : IRequestHeader
 {
     public RequestHeader(string Name, string value) : this(Name, value.Split().ToList())
     {

@@ -1,6 +1,8 @@
 ﻿using System.Data;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Mime;
+using System.Text;
 using codecrafters_http_server.Dictionaries;
 using codecrafters_http_server.Extensions;
 using static System.Net.Mime.MediaTypeNames;
@@ -57,7 +59,7 @@ public abstract class HttpResponseBuilder()
         {
             case Routes.Default:
                 return new ResponseEntity([
-                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, request.Body.Length)], request.Body);
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, request.Body.Length)], Encoding.UTF8.GetBytes(request.Body));
             
             case Routes.Echo:
                 var echo = request.Route.Parameter;
@@ -69,11 +71,27 @@ public abstract class HttpResponseBuilder()
                 
                 if (!string.IsNullOrEmpty(encodingValue))
                 {
+                    if (encodingValue is "gzip")
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(echo);
+                        using var memoryStream = new MemoryStream();
+                        using var gzipStream = new GZipStream(memoryStream, CompressionMode.Compress, true);
+                        gzipStream.Write(bytes, 0, bytes.Length);
+                        gzipStream.Flush();
+                        gzipStream.Close();
+                        var compressedContent = memoryStream.ToArray();
+
+                        return new ResponseEntity([
+                            new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, encodingValue),
+                            new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
+                            new ResponseHeader<int>(HttpResponseHeader.ContentLength, compressedContent.Length)
+                        ], compressedContent);
+                    }
                     return new ResponseEntity([
                         new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, encodingValue),
                         new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
-                    ], echo);
+                    ], Encoding.UTF8.GetBytes(echo));
                 }
                         
                         
@@ -83,7 +101,7 @@ public abstract class HttpResponseBuilder()
                 return new ResponseEntity([
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                     new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
-                ], echo);
+                ], Encoding.UTF8.GetBytes(echo));
 
             case Routes.UserAgent:
                 var userAgent = request.Headers.First(header => header.Name == "User-Agent").Values[0];
@@ -91,7 +109,7 @@ public abstract class HttpResponseBuilder()
                 return new ResponseEntity([
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                     
-                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, userAgent.Length)], userAgent);
+                    new ResponseHeader<int>(HttpResponseHeader.ContentLength, userAgent.Length)], Encoding.UTF8.GetBytes(userAgent));
             
             case Routes.Files:
                 var file = request.RequestFile;
@@ -113,7 +131,7 @@ public abstract class HttpResponseBuilder()
                         
                         new ResponseHeader<int>(
                             HttpResponseHeader.ContentLength, request.RequestFile.Contents.Length),
-                        ], request.RequestFile.Contents);
+                        ], Encoding.UTF8.GetBytes(request.RequestFile.Contents));
                 }
 
                 if (method == HttpMethod.Get && !file.FileValidated)
@@ -122,11 +140,11 @@ public abstract class HttpResponseBuilder()
                         new ResponseHeader<string>(HttpResponseHeader.Connection, "close"),
                         
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, 0)
-                    ], request.RequestFile.Contents);
+                    ], Encoding.UTF8.GetBytes(request.RequestFile.Contents));
                 }
                 else if (method == HttpMethod.Post && file.FileValidated)
                 {
-                    return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Application.Octet)], request.Body);
+                    return new ResponseEntity([new ResponseHeader<string>(HttpResponseHeader.ContentType, Application.Octet)], Encoding.UTF8.GetBytes(request.Body));
                 }
                 else
                 {

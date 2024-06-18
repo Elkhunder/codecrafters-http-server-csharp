@@ -16,6 +16,10 @@ public abstract class HttpResponseHandler()
                               $"{httpResponse}");
             Console.WriteLine();
             var bytesSent = socket.Send(buffer, SocketFlags.None);
+            if (httpResponse.ResponseEntity.Body is not null)
+            {
+                socket.Send(httpResponse.ResponseEntity.Body, 0, httpResponse.ResponseEntity.Body.Length, SocketFlags.None);
+            }
             Console.WriteLine($"Bytes Sent: {bytesSent}");
 
             if (!socket.Connected) return;
