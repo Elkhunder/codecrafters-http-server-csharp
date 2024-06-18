@@ -62,9 +62,14 @@ namespace codecrafters_http_server.Helpers
         return headers.Select
         (
             header => 
-                header.Split([":"], 2, StringSplitOptions.None)).Select(headerParts => 
-            new RequestHeader(headerParts[0].Trim(), headerParts[1].Trim())
-        ).ToList();
+                header.Split([":"], 2, StringSplitOptions.None)).Select(headerParts =>
+        {
+            if (headerParts[0].Trim().Equals("Accept-Encoding", StringComparison.OrdinalIgnoreCase))
+            {
+                return new RequestHeader(headerParts[0], headerParts[1].Split(",").ToList());
+            }
+            return new RequestHeader(headerParts[0].Trim(), headerParts[1].Trim());
+        }).ToList();
     }
 
     public static RequestFile ParseRequestFile(string directory, Route route, HttpMethod method, string contents)

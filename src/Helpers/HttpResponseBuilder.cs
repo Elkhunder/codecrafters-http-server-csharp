@@ -63,9 +63,9 @@ public abstract class HttpResponseBuilder()
                 var echo = request.Route.Parameter;
                 var encodingHeader = request.Headers.FirstOrDefault(header => header.Name is "Accept-Encoding");
 
-                if (encodingHeader is null || !Enum.GetNames(typeof(EncodingProvider))
-                        .Any(name =>
-                            string.Equals(name, encodingHeader.Value, StringComparison.CurrentCultureIgnoreCase)))
+                if (encodingHeader is null || encodingHeader.Values.Any(value => 
+                        Enum.GetNames(typeof(EncodingProvider)).Any(name =>
+                            string.Equals(name, value, StringComparison.CurrentCultureIgnoreCase))))
                     return new ResponseEntity([
                         new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
@@ -78,7 +78,7 @@ public abstract class HttpResponseBuilder()
                 ], echo);
 
             case Routes.UserAgent:
-                var userAgent = request.Headers.First(header => header.Name == "User-Agent").Value;
+                var userAgent = request.Headers.First(header => header.Name == "User-Agent").Values[0];
                 
                 return new ResponseEntity([
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
