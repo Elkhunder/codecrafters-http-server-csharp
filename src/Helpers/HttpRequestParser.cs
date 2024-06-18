@@ -66,7 +66,9 @@ namespace codecrafters_http_server.Helpers
         {
             if (headerParts[0].Trim().Equals("Accept-Encoding", StringComparison.OrdinalIgnoreCase))
             {
-                return new RequestHeader(headerParts[0], headerParts[1].Split(",").ToList());
+                return new RequestHeader(headerParts[0], headerParts[1].Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(value => value.Trim())
+                    .ToList());
             }
             return new RequestHeader(headerParts[0].Trim(), headerParts[1].Trim());
         }).ToList();

@@ -62,17 +62,25 @@ public abstract class HttpResponseBuilder()
             case Routes.Echo:
                 var echo = request.Route.Parameter;
                 var encodingHeader = request.Headers.FirstOrDefault(header => header.Name is "Accept-Encoding");
-
-                if (encodingHeader is null || encodingHeader.Values.Any(value => 
-                        Enum.GetNames(typeof(EncodingProvider)).Any(name =>
-                            string.Equals(name, value, StringComparison.CurrentCultureIgnoreCase))))
+                
+                var encodingValue = encodingHeader?.Values.FirstOrDefault(value =>
+                    Enum.GetNames(typeof(EncodingProvider)).Any(provider =>
+                        string.Equals(provider, value, StringComparison.OrdinalIgnoreCase)));
+                
+                if (!string.IsNullOrEmpty(encodingValue))
+                {
                     return new ResponseEntity([
+                        new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, encodingValue),
                         new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                         new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
                     ], echo);
+                }
+                        
+                        
                 Console.WriteLine($"$Accept Encoding Header set, {encodingHeader}");
+                
+            
                 return new ResponseEntity([
-                    new ResponseHeader<string>(HttpResponseHeader.ContentEncoding, DecompressionMethods.GZip.ToString()),
                     new ResponseHeader<string>(HttpResponseHeader.ContentType, Text.Plain),
                     new ResponseHeader<int>(HttpResponseHeader.ContentLength, echo.Length)
                 ], echo);
